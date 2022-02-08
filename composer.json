@@ -1,0 +1,26 @@
+{
+    "name": "minizord/container",
+    "description": "Um container",
+    "type": "library",
+    "license": "mit",
+    "autoload": {
+        "psr-4": {
+            "Minizord\\Container\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Mauricio Roberto",
+            "email": "mauricio.roberto.dev@gmail.com"
+        }
+    ],
+    "minimum-stability": "stable",
+    "require": {
+        "pestphp/pest": "1.21.1"
+    },
+    "config": {
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    }
+}
