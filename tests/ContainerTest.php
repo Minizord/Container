@@ -158,5 +158,7 @@ test('Deve retornar o id final do serviço dentro do container, passando o id fi
 
     expect($c->getIdInContainer('id_alternativo'))->toBe('id');
     expect($c->getIdInContainer('id'))->toBe('id');
+
+    var_dump($c);
 });
 

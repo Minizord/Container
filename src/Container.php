@@ -1,7 +1,9 @@
 <?php
 
 namespace Minizord\Container;
+
 use Closure;
+use Minizord\Container\Resolver;
 use Minizord\Container\Definition;
 use Minizord\Container\Interfaces\ContainerInterface;
 use Minizord\Container\Interfaces\DefinitionInterface;
@@ -36,19 +38,21 @@ class Container implements ContainerInterface {
         if (is_string($concrete)) {
             $this->definitions[$id] = (new Definition($id, $concrete, null, $shared));
         }
+
+        // return $this->getDefinition($id);
     }
-    
+
     public function singleton(string $id, Closure|string|null $concrete): void
     {
         $this->set($id, $concrete, true);
     }
 
-    // INSTANCIAS
     public function instance(string $id, mixed $instance): void
     {
         $this->instances[$id] = $instance;
     }
 
+    // INSTANCIAS
     public function hasInstance(string $id): bool
     {
         return isset($this->instances[$id]);
@@ -114,8 +118,7 @@ class Container implements ContainerInterface {
             : $aliasOrId;
     }
 
-    // GERAL
-    public function resolve(string $id): mixed
+    public function resolve(DefinitionInterface $definition): mixed
     {
         return null;
     }
