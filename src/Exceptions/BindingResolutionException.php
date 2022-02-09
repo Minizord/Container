@@ -2,4 +2,7 @@
 
 namespace Minizord\Container\Exceptions;
 
-class BindingResolutionException extends ContainerException {}
+use TheSeer\Tokenizer\Exception;
+use Minizord\Container\Exceptions\ContainerExceptionInterface;
+
+class BindingResolutionException extends Exception implements ContainerExceptionInterface {}

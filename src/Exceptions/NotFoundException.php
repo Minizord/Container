@@ -2,4 +2,8 @@
 
 namespace Minizord\Container\Exceptions;
 
-class NotFoundException extends ContainerException {}
+use Exception;
+use Psr\Container\ContainerExceptionInterface;
+use Minizord\Container\Exceptions\ContainerException;
+
+class NotFoundException extends Exception implements ContainerExceptionInterface {}

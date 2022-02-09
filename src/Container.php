@@ -35,7 +35,7 @@ class Container implements ContainerInterface {
 
         $id = $this->getIdInContainer($id);
 
-        if (isset($this->instances[$id])) {
+        if ($this->hasInstance($id)) {
             return $this->getInstance($id);
         }
 
@@ -171,12 +171,12 @@ class Container implements ContainerInterface {
         try {
             $class = new ReflectionClass($class);
             if (!$class->isInstantiable()) {
-                throw new BindingResolutionException("Erro ao resolver [$this->id] a classe não é concreta, você só pode setar classes concretas e funções");
+                throw new BindingResolutionException("Erro ao resolver [$class] a classe não é concreta, você só pode setar classes concretas e funções");
             }
             return $class;
         }
         catch (\Throwable $th) {
-            throw new BindingResolutionException("Erro ao resolver [$this->id], a classe não existe, você só pode setar classes concretas e funções");
+            throw new BindingResolutionException("Erro ao resolver [$class], a classe não existe, você só pode setar classes concretas e funções");
         }
     }
 

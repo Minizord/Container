@@ -1,8 +1,18 @@
 <?php
 use Minizord\Container\Container;
+use Minizord\Container\Tests\Fixtures\ClassA;
+
+use Minizord\Container\Tests\Fixtures\ClassB;
+use Minizord\Container\Tests\Fixtures\ClassC;
+use Minizord\Container\Exceptions\NotFoundException;
+
 use Minizord\Container\Tests\Fixtures\ClassConcrete;
 use Minizord\Container\Tests\Fixtures\ClassInterface;
 use Minizord\Container\Interfaces\DefinitionInterface;
+
+use Minizord\Container\Tests\Fixtures\ClassAInterface;
+use Minizord\Container\Tests\Fixtures\ClassBInterface;
+use Minizord\Container\Tests\Fixtures\ClassCInterface;
 
 // TESTES DE ID ALTERNATIVO
 test('Deve retornar se a string passada é um id alternativo (alias) ou não', function() {
@@ -166,6 +176,30 @@ test('Deve retornar uma instancia da classe concreta que foi setada como servço
     expect($c->get('id'))->toBeInstanceOf(ClassConcrete::class);    
 });
 
+test('Deve retornar uma instancia do próprio id se a classe concreta não foi passada', function () {
+    $c = new Container;
+
+    $c->set(ClassConcrete::class);
+
+    expect($c->get(ClassConcrete::class))->toBeInstanceOf(ClassConcrete::class);
+});
+
+test('Deve retornar um erro ao buscar com um id não existente e sendo uma classe não existente', function() {
+    $c = new Container;
+
+    expect(fn() => $c->get(ClassNonexistent::class))->toThrow(NotFoundException::class);
+});
+
+test('Deve retornar uma instancia de um serviço que depende de outras classes setadas no container', function() {
+    $c = new Container;
+
+    $c->set(ClassAInterface::class, ClassA::class);
+    $c->set(ClassBInterface::class, ClassB::class);
+    $c->set(ClassCInterface::class, ClassC::class);
+
+    expect($c->get(ClassAInterface::class))->toBeInstanceOf(ClassA::class);
+});
+
 // singleton
 test('Deve setar um singleton no container', function () {
     $c = new Container;
@@ -183,6 +217,15 @@ test('Deve retornar a exata mesma instancia de um singleton setado no container'
 
     expect($c->get(ClassInterface::class))->toBe($c->get(ClassInterface::class));
     expect(spl_object_id($c->get(ClassInterface::class)))->toEqual(spl_object_id($c->get(ClassInterface::class)));
+});
+
+test('Deve retornar instancias diferentes se um serviço for setado normalmente no container', function () {
+    $c = new Container;
+
+    $c->set(ClassInterface::class , ClassConcrete::class);
+
+    expect($c->get(ClassInterface::class))->not()->toBe($c->get(ClassInterface::class));
+    expect(spl_object_id($c->get(ClassInterface::class)))->not()->toEqual(spl_object_id($c->get(ClassInterface::class)));
 });
 
 // TESTE DE MÉTODO MAIS GERAIS
