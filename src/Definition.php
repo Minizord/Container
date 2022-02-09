@@ -9,10 +9,10 @@ class Definition implements DefinitionInterface {
     /**
      * Construtor
      *
-     * @param string             $id       Identificador do serviço, geralmente uma interface ou a própria classe
-     * @param string|null        $class    A classe concreta que será instanciada ao resolver essa definição
-     * @param Closure|null|null  $closure  Função que será retornada ao resolver essa definição
-     * @param boolean            $shared
+     * @param string        $id       Identificador do serviço, geralmente uma interface ou a própria classe
+     * @param string|null   $class    A classe concreta que será instanciada ao resolver essa definição
+     * @param Closure|null  $closure  Função que será retornada ao resolver essa definição
+     * @param boolean       $shared   Define se será compartilhado ou seja um singleton
      */
     public function __construct(
         private string $id, 
@@ -60,5 +60,14 @@ class Definition implements DefinitionInterface {
     public function hasClosure(): bool
     {
         return isset($this->closure);
+    }
+
+    public function getClosure(): Closure
+    {
+        return $this->closure;
+    }
+    public function getClass(): string
+    {
+        return $this->class;
     }
 }

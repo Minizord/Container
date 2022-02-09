@@ -36,6 +36,3 @@ test('Deve retornar se a definição tem uma closure ou não', function () {
     $d = new Definition('definition.id', 'definition.class', null);
     expect($d->hasClosure())->toBeFalse();
 });
-
-
-

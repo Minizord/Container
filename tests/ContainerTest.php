@@ -1,7 +1,8 @@
 <?php
 use Minizord\Container\Container;
+use Minizord\Container\Tests\Fixtures\ClassConcrete;
+use Minizord\Container\Tests\Fixtures\ClassInterface;
 use Minizord\Container\Interfaces\DefinitionInterface;
-use Minizord\Container\ClassConcrete;
 
 // TESTES DE ID ALTERNATIVO
 test('Deve retornar se a string passada é um id alternativo (alias) ou não', function() {
@@ -104,17 +105,8 @@ test('Deve retornar todas as definições', function () {
     ]);
 });
 
-// TESTES DE SINGLETON
-test('Deve setar um singleton no container', function() {
-    $c = new Container;
-
-    $c->singleton('id', 'classe_concreta_ou_função');
-
-    expect($c->hasDefinition('id'))->tobeTrue();
-    expect($c->getDefinition('id')->isShared())->tobeTrue();
-});
-
 // TESTES DOS MÉTODOS PRINCIPAIS
+// has
 test('Deve retornar se um determinado serviço existe no container passando um id ou id alternativo', function() {
     $c = new Container;
 
@@ -124,6 +116,7 @@ test('Deve retornar se um determinado serviço existe no container passando um i
     expect($c->has('id'))->toBeTrue();
 });
 
+// set
 test('Deve setar um serviço em que a parte concreta é uma função (Closure)', function() {
     $c = new Container;
 
@@ -150,6 +143,48 @@ test('Deve setar um serviço em que a parte concreta é uma classe', function ()
     expect($c->hasDefinition('id'))->toBeTrue();    
 });
 
+//get
+test('Deve retornar a execução de uma função (Closure) que foi setada no container como serviço', function() {
+    $c = new Container;
+
+    $c->set('id', function() {
+        return 'alguma_coisa';
+    });
+
+    $c->set('id2', function () {
+        return new ClassConcrete;
+    });
+
+    expect($c->get('id'))->toBe('alguma_coisa');
+    expect($c->get('id2'))->toBeInstanceOf(ClassConcrete::class);
+});
+
+test('Deve retornar uma instancia da classe concreta que foi setada como servço no container', function () {
+    $c = new Container;
+
+    $c->set('id', ClassConcrete::class);
+    expect($c->get('id'))->toBeInstanceOf(ClassConcrete::class);    
+});
+
+// singleton
+test('Deve setar um singleton no container', function () {
+    $c = new Container;
+
+    $c->singleton('id', 'classe_concreta_ou_função');
+
+    expect($c->hasDefinition('id'))->tobeTrue();
+    expect($c->getDefinition('id')->isShared())->tobeTrue();
+});
+
+test('Deve retornar a exata mesma instancia de um singleton setado no container', function () {
+    $c = new Container;
+
+    $c->singleton(ClassInterface::class, ClassConcrete::class);
+
+    expect($c->get(ClassInterface::class))->toBe($c->get(ClassInterface::class));
+    expect(spl_object_id($c->get(ClassInterface::class)))->toEqual(spl_object_id($c->get(ClassInterface::class)));
+});
+
 // TESTE DE MÉTODO MAIS GERAIS
 test('Deve retornar o id final do serviço dentro do container, passando o id final ou um alternativo', function() {
     $c = new Container;
@@ -158,7 +193,4 @@ test('Deve retornar o id final do serviço dentro do container, passando o id fi
 
     expect($c->getIdInContainer('id_alternativo'))->toBe('id');
     expect($c->getIdInContainer('id'))->toBe('id');
-
-    var_dump($c);
 });
-

@@ -3,10 +3,13 @@
 namespace Minizord\Container;
 
 use Closure;
+use ReflectionClass;
 use Minizord\Container\Resolver;
 use Minizord\Container\Definition;
+use Minizord\Container\Exceptions\NotFoundException;
 use Minizord\Container\Interfaces\ContainerInterface;
 use Minizord\Container\Interfaces\DefinitionInterface;
+use Minizord\Container\Exceptions\BindingResolutionException;
 
 class Container implements ContainerInterface {
     private array $aliases = [];
@@ -22,7 +25,28 @@ class Container implements ContainerInterface {
 
     public function get(string $id): mixed
     {
-        return null;
+        if (!$this->has($id)) {
+            if (class_exists($id)) {
+                $this->set($id, $id);
+                return $this->get($id);
+            }
+            throw new NotFoundException("Não ha nada registrado no container com id [$id], ou você passou uma classe que não existe para ser instanciada");
+        }
+
+        $id = $this->getIdInContainer($id);
+
+        if (isset($this->instances[$id])) {
+            return $this->getInstance($id);
+        }
+
+        $definition = $this->getDefinition($id);
+
+        if($definition->isShared()) {
+            $this->instances[$definition->getId()] = $this->resolve($definition);
+            return $this->getInstance($definition->getId());
+        }
+
+        return $this->resolve($definition);
     }
 
     public function set(string $id, Closure|string|null $concrete = null, bool $shared = false): void
@@ -84,7 +108,10 @@ class Container implements ContainerInterface {
         return $this->definitions;
     }
 
-    // ID ALTERNATIVO
+    // #######################
+    // # ID ALTERNATIVO
+    // #######################
+
     public function alias(string $id, string $alias): void
     {
         $this->aliases[$alias] = $id;
@@ -118,8 +145,49 @@ class Container implements ContainerInterface {
             : $aliasOrId;
     }
 
+    // RESOLVER
     public function resolve(DefinitionInterface $definition): mixed
     {
-        return null;
+
+        if ($definition->hasClosure()) {
+            return $definition->getClosure()($this);
+        }
+
+        $reflector = $this->getReflectionClass($definition->getClass());
+
+        $constructor = $reflector->getConstructor();
+
+        if ($constructor === null) {
+            return $reflector->newInstance();
+        }
+
+        $dependencies = $this->resolveDependencies($constructor->getParameters());
+
+        return $reflector->newInstanceArgs($dependencies);
+    }
+
+    private function getReflectionClass(string $class)
+    {
+        try {
+            $class = new ReflectionClass($class);
+            if (!$class->isInstantiable()) {
+                throw new BindingResolutionException("Erro ao resolver [$this->id] a classe não é concreta, você só pode setar classes concretas e funções");
+            }
+            return $class;
+        }
+        catch (\Throwable $th) {
+            throw new BindingResolutionException("Erro ao resolver [$this->id], a classe não existe, você só pode setar classes concretas e funções");
+        }
+    }
+
+    private function resolveDependencies(array $dependencies): array
+    {
+        $results = [];
+
+        foreach ($dependencies as $dependency) {
+            array_push($results, $this->get($dependency->getType()));
+        }
+
+        return $results;
     }
 }

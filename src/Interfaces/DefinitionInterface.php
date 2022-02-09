@@ -2,6 +2,8 @@
 
 namespace Minizord\Container\Interfaces;
 
+use Closure;
+
 interface DefinitionInterface {
 
     /**
@@ -32,4 +34,8 @@ interface DefinitionInterface {
      * @return boolean
      */
     public function hasClosure(): bool;
+
+    public function getClosure(): Closure;
+
+    public function getClass(): string;
 }

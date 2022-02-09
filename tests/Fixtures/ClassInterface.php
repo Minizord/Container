@@ -1,5 +1,5 @@
 <?php
 
-namespace Minizord\Container;
+namespace Minizord\Container\Tests\Fixtures;
 
 interface ClassInterface {}

@@ -8,6 +8,11 @@
             "Minizord\\Container\\": "src/"
         }
     },
+    "autoload-dev": {
+        "psr-4": {
+            "Minizord\\Container\\Tests\\": "tests/"
+        }
+    },
     "scripts": {
         "test": "./vendor/bin/pest",
         "test-cover": "./vendor/bin/pest --coverage"
