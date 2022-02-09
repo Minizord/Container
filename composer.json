@@ -8,6 +8,10 @@
             "Minizord\\Container\\": "src/"
         }
     },
+    "scripts": {
+        "test": "./vendor/bin/pest",
+        "test-cover": "./vendor/bin/pest --coverage"
+    },
     "authors": [
         {
             "name": "Mauricio Roberto",
@@ -18,8 +22,10 @@
     ],
     "minimum-stability": "stable",
     "require": {
-        "pestphp/pest": "1.21.1",
         "psr/container": "^2.0"
+    },
+    "require-dev": {
+        "pestphp/pest": "^1.21.1"
     },
     "config": {
         "allow-plugins": {
