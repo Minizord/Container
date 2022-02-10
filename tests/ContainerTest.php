@@ -5,14 +5,20 @@ use Minizord\Container\Tests\Fixtures\ClassA;
 use Minizord\Container\Tests\Fixtures\ClassB;
 use Minizord\Container\Tests\Fixtures\ClassC;
 use Minizord\Container\Exceptions\NotFoundException;
-
 use Minizord\Container\Tests\Fixtures\ClassConcrete;
-use Minizord\Container\Tests\Fixtures\ClassInterface;
-use Minizord\Container\Interfaces\DefinitionInterface;
 
+use Minizord\Container\Tests\Fixtures\ClassInterface;
+use Minizord\Container\Tests\Fixtures\ClassParameter;
+use Minizord\Container\Interfaces\DefinitionInterface;
 use Minizord\Container\Tests\Fixtures\ClassAInterface;
+
 use Minizord\Container\Tests\Fixtures\ClassBInterface;
+
 use Minizord\Container\Tests\Fixtures\ClassCInterface;
+use Minizord\Container\Tests\Fixtures\ClassNeedClassParameter;
+use Minizord\Container\Tests\Fixtures\ClassParameterInterface;
+use Minizord\Container\Tests\Fixtures\ClassNeedPrimitiveParameter;
+use Minizord\Container\Tests\Fixtures\OtherClassParameter;
 
 // TESTES DE ID ALTERNATIVO
 test('Deve retornar se a string passada é um id alternativo (alias) ou não', function() {
@@ -193,11 +199,40 @@ test('Deve retornar um erro ao buscar com um id não existente e sendo uma class
 test('Deve retornar uma instancia de um serviço que depende de outras classes setadas no container', function() {
     $c = new Container;
 
+    // A precisa de B e também de C
     $c->set(ClassAInterface::class, ClassA::class);
+    // B precisa de C
     $c->set(ClassBInterface::class, ClassB::class);
+    // C não precisa de ninguém
     $c->set(ClassCInterface::class, ClassC::class);
 
     expect($c->get(ClassAInterface::class))->toBeInstanceOf(ClassA::class);
+});
+
+test('Deve retornar uma instancia montada com os parametros primitivos passados na hora do get()', function() {
+    $c = new Container;
+
+    $c->set('id', ClassNeedPrimitiveParameter::class);
+
+    expect($c->get('id', [
+        'primitiveParameter' => 'recebeu o parametro' ,
+    ]))->toBeInstanceOf(ClassNeedPrimitiveParameter::class);
+    expect($c->get('id', [
+        'primitiveParameter' => 'recebeu o parametro',
+    ])->returnParameter())->tobe('recebeu o parametro');
+});
+
+test('Deve retornar uma instancia montada com os parametros de classe passados na hora do get()', function () {
+    $c = new Container;
+
+    $c->set('id', ClassNeedClassParameter::class);
+    $c->set(ClassParameterInterface::class, ClassParameter::class);
+
+    expect($c->get('id'))->toBeInstanceOf(ClassNeedClassParameter::class);
+    expect($c->get('id')->getClassParameter())->toBeInstanceOf(ClassParameter::class);
+    expect($c->get('id', [
+        'classParameter' => new OtherClassParameter,
+    ])->getClassParameter())->toBeInstanceOf(OtherClassParameter::class);
 });
 
 // singleton
