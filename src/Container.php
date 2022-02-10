@@ -190,6 +190,7 @@ class Container implements ContainerInterface {
             $instances = $this->resolveDependencies($dependencies);
         } catch (BindingResolutionException $e) {
             $this->removeLastBuildStack();
+            $this->resetWithParameters();
             throw $e;
         }
 
@@ -231,8 +232,6 @@ class Container implements ContainerInterface {
                 ? $this->resolvePrimitive($dependency)
                 : $this->resolveClass($dependency);
             
-            
-
             if ($dependency->isVariadic()) {
                 if (!is_array($result)) {
                     $result = [$result];
@@ -267,13 +266,7 @@ class Container implements ContainerInterface {
 
     protected function hasParameterOverride(ReflectionParameter $dependency): bool
     {
-
         return isset($this->with[$dependency->getName()]);
-
-        // return array_key_exists(
-        //     $dependency->getName(),
-        //     $this->getLastParameterOverride()
-        // );
     }
 
     protected function getParameterOverride(ReflectionParameter $dependency)
@@ -282,7 +275,7 @@ class Container implements ContainerInterface {
         return $this->with[$dependency->getName()];
     }
 
-    public static function getParameterClassName(ReflectionParameter $parameter): string|null
+    public function getParameterClassName(ReflectionParameter $parameter): string|null
     {
         $type = $parameter->getType();
 
@@ -294,7 +287,9 @@ class Container implements ContainerInterface {
 
         if (!is_null($class = $parameter->getDeclaringClass())) {
             if ($name === 'self') {
-                return $class->getName();
+                $previous = implode(', ', $this->buildStack);
+                $message = "Durante a construção de [$previous] a classe [{$class->getName()}] precisa dela mesma para ser construída isso gera um loop infinito.";
+                throw new BindingResolutionException($message);
             }
 
             if ($name === 'parent' && $parent = $class->getParentClass()) {
@@ -317,24 +312,12 @@ class Container implements ContainerInterface {
 
     protected function resolveClass(ReflectionParameter $parameter)
     {
-        try {
+ 
             return $parameter->isVariadic()
                 ? $this->resolveVariadicClass($parameter)
                 : $this->get($this->getParameterClassName($parameter));
-        }
-        catch (BindingResolutionException $e) {
-            if ($parameter->isDefaultValueAvailable()) {
-                $this->removeLastWithParameter();
-                return $parameter->getDefaultValue();
-            }
+       
 
-            if ($parameter->isVariadic()) {
-                $this->removeLastWithParameter();
-                return [];
-            }
-
-            throw $e;
-        }
     }
 
     private function resolveVariadicClass(ReflectionParameter $parameter)
@@ -354,7 +337,7 @@ class Container implements ContainerInterface {
         array_pop($this->buildStack);
     }
 
-    private function removeLastWithParameter(): void
+    private function resetWithParameters(): void
     {
         array_pop($this->with);
     }

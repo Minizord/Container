@@ -9,18 +9,21 @@ use Minizord\Container\Tests\Fixtures\ClassConcrete;
 
 use Minizord\Container\Tests\Fixtures\ClassInterface;
 use Minizord\Container\Tests\Fixtures\ClassParameter;
+use Minizord\Container\Tests\Fixtures\ParentOfAClass;
 use Minizord\Container\Interfaces\DefinitionInterface;
+
 use Minizord\Container\Tests\Fixtures\ClassAInterface;
 
 use Minizord\Container\Tests\Fixtures\ClassBInterface;
-
 use Minizord\Container\Tests\Fixtures\ClassCInterface;
 use Minizord\Container\Tests\Fixtures\OtherClassParameter;
+use Minizord\Container\Tests\Fixtures\ClassLoopConstructor;
 use Minizord\Container\Exceptions\BindingResolutionException;
 use Minizord\Container\Tests\Fixtures\ClassNeedClassParameter;
 use Minizord\Container\Tests\Fixtures\ClassParameterInterface;
 use Minizord\Container\Tests\Fixtures\ClassNeedPrimitiveParameter;
 use Minizord\Container\Tests\Fixtures\ClassWithClassVariadicParameter;
+use Minizord\Container\Tests\Fixtures\ClassWithParentAndParentDependency;
 use Minizord\Container\Tests\Fixtures\CLassWithPrimitiveDefaultParamater;
 use Minizord\Container\Tests\Fixtures\ClassWithPrimitiveVariadicParameter;
 
@@ -200,12 +203,6 @@ test('Deve retornar uma classe q não foi setada se tiver como resolver', functi
     expect($c->get(ClassConcrete::class))->toBeInstanceOf(ClassConcrete::class);
 });
 
-test('Deve retornar um erro ao buscar com um id não existente e sendo uma classe não existente', function() {
-    $c = new Container;
-
-    expect(fn() => $c->get(ClassNonexistent::class))->toThrow(NotFoundException::class);
-});
-
 test('Deve retornar uma instancia de um serviço que depende de outras classes setadas no container', function() {
     $c = new Container;
 
@@ -274,6 +271,14 @@ test('Deve retornar uma instancia em que uma dependencia é um parametro variadi
     expect($c->get('id'))->toBeInstanceOf(ClassWithClassVariadicParameter::class);
 });
 
+test('Deve construir uma classe em que uma dependencia é "parent"', function() {
+    $c = new Container;
+
+    $c->set('id', ClassWithParentAndParentDependency::class);
+
+    expect($c->get('id'))->toBeInstanceOf(ClassWithParentAndParentDependency::class);
+});
+
 // singleton
 test('Deve setar um singleton no container', function () {
     $c = new Container;
@@ -322,6 +327,12 @@ test('Deve retornar o id final do serviço dentro do container, passando o id fi
 
 
 // TESTES DE ERRO 
+test('Deve retornar um erro ao buscar com um id não existente e sendo uma classe não existente', function () {
+    $c = new Container;
+
+    expect(fn() => $c->get(ClassNonexistent::class))->toThrow(NotFoundException::class);
+});
+
 test('Deve retornar um erro ao tentar resolver um serviço que foi passado uma classe abstrada ao invés de concreta', function() {
     $c = new Container;
 
@@ -355,5 +366,34 @@ test('Deve retornar um erro ao tentar resolver uma classe que precisa de um para
     expect(fn() => $c->get('id'))->toThrow(BindingResolutionException::class);        
 });
 
+test('Deve retornar um erro ao tentar construir uma classe que depende dela mesma (gerando um loop infinito)', function() {
+    $c = new Container;
+
+    $c->set('id', ClassLoopConstructor::class);
+
+    expect(fn() => $c->get('id'))->toThrow(BindingResolutionException::class);
+});
+
+test('Deve retornar um erro ao tentar construir uma classe q precisa de um parametro primitivo sem valor default e sem with()', function() {
+    $c = new Container;
+
+    class ClassNotReceivePrimitiveParameter {
+        public function __construct(string $needThisParameter) {}
+    }
+
+    $c->set('id', ClassNotReceivePrimitiveParameter::class);
+
+    expect(fn() => $c->get('id'))->toThrow(BindingResolutionException::class);
+});
+
+test('error', function() {
+    $c = new Container;
 
 
+    class AnClass {
+        public function __construct(private string $parameter = 'default') {}
+    }
+   
+    $c->set('id', AnClass::class);
+    expect( $c->get('id'))->toBeInstanceOf(AnClass::class);
+});
