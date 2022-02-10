@@ -19,6 +19,7 @@ use Minizord\Container\Tests\Fixtures\ClassNeedClassParameter;
 use Minizord\Container\Tests\Fixtures\ClassParameterInterface;
 use Minizord\Container\Tests\Fixtures\ClassNeedPrimitiveParameter;
 use Minizord\Container\Tests\Fixtures\OtherClassParameter;
+use Minizord\Container\Exceptions\BindingResolutionException;
 
 // TESTES DE ID ALTERNATIVO
 test('Deve retornar se a string passada é um id alternativo (alias) ou não', function() {
@@ -182,10 +183,16 @@ test('Deve retornar uma instancia da classe concreta que foi setada como servço
     expect($c->get('id'))->toBeInstanceOf(ClassConcrete::class);    
 });
 
-test('Deve retornar uma instancia do próprio id se a classe concreta não foi passada', function () {
+test('Deve retornar uma instancia do próprio id se a classe concreta não foi passada ao setar o serviço', function () {
     $c = new Container;
 
     $c->set(ClassConcrete::class);
+
+    expect($c->get(ClassConcrete::class))->toBeInstanceOf(ClassConcrete::class);
+});
+
+test('Deve retornar uma classe q não foi setada se tiver como resolver', function() {
+    $c = new Container;
 
     expect($c->get(ClassConcrete::class))->toBeInstanceOf(ClassConcrete::class);
 });
@@ -263,6 +270,18 @@ test('Deve retornar instancias diferentes se um serviço for setado normalmente 
     expect(spl_object_id($c->get(ClassInterface::class)))->not()->toEqual(spl_object_id($c->get(ClassInterface::class)));
 });
 
+test('Deve retornar uma instancia em que a classe precisa de um parametro primitivo com valor dafualt', function () {
+    $c = new Container;
+
+    class CLassWithPrimitiveDefaultParamater {
+        public function __construct(string $string = 'string') {}
+    }
+
+    $c->set('id', CLassWithPrimitiveDefaultParamater::class);
+
+    expect($c->get('id'))->toBeInstanceOf(CLassWithPrimitiveDefaultParamater::class);
+});
+
 // TESTE DE MÉTODO MAIS GERAIS
 test('Deve retornar o id final do serviço dentro do container, passando o id final ou um alternativo', function() {
     $c = new Container;
@@ -271,4 +290,57 @@ test('Deve retornar o id final do serviço dentro do container, passando o id fi
 
     expect($c->getIdInContainer('id_alternativo'))->toBe('id');
     expect($c->getIdInContainer('id'))->toBe('id');
+});
+
+
+// TESTES DE ERRO 
+test('Deve retornar um erro ao tentar resolver um serviço que foi passado uma classe abstrada ao invés de concreta', function() {
+    $c = new Container;
+
+    $c->set('id', ClassInterface::class);
+
+    expect(fn() => $c->get('id'))->toThrow(BindingResolutionException::class);
+});
+
+test('Deve retornar um erro ao tentar resolver uma de um serviço', function () {
+    $c = new Container;
+
+    $c->set('id', ClassA::class);
+    $c->set(ClassBInterface::Class, ClassBInterface::class);
+
+    expect(fn() => $c->get('id'))->toThrow(BindingResolutionException::class);
+});
+
+test('Deve retornar um erro ao tentar resolver uma de um serviço em que a classe concreta não existe', function () {
+    $c = new Container;
+
+    $c->set('id', Nonexistent::class);
+
+    expect(fn() => $c->get('id'))->toThrow(BindingResolutionException::class);
+});
+
+test('Deve retornar um erro ao tentar resolver uma classe que precisa de um parametro primitivo sem ter valor default', function () {
+    $c = new Container;
+
+    class CLassWithoutPrimitiveDefaultParameter {
+        public function __construct(string $string) {}
+    }
+
+    $c->set('id', CLassWithoutPrimitiveDefaultParameter::class);
+
+    expect(fn() => $c->get('id'))->toThrow(BindingResolutionException::class);        
+});
+
+test('variados', function () {
+    $c = new Container;
+
+    class ClassWithVariadicParameter {
+        public function __construct(string ...$string) {
+            var_dump($string);
+        }
+    }
+
+    $c->set('id', ClassWithVariadicParameter::class);
+
+    expect($c->get('id', ['string' => [ 'maozin', 'paozin' ]]))->toBeInstanceOf(ClassWithVariadicParameter::Class);
 });

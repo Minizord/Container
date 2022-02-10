@@ -217,9 +217,12 @@ class Container implements ContainerInterface {
 
         foreach ($dependencies as $dependency) {
 
-
-            
             if ($this->hasParameterOverride($dependency)) {
+
+                if ($dependency->isVariadic()) {
+                    $results = [...$results, ...$this->getParameterOverride($dependency)];
+                    continue;
+                }
                 $results[] = $this->getParameterOverride($dependency);
                 continue;
             }
@@ -229,12 +232,15 @@ class Container implements ContainerInterface {
                 : $this->resolveClass($dependency);
 
             if ($dependency->isVariadic()) {
-                $results = array_merge($results, $result);
+                var_dump('estou aqui');
+                $results = [...$results, ...$result];
             }
             else {
                 $results[] = $result;
             }
         }
+
+        // var_dump($results);
 
         return $results;
     }
@@ -259,14 +265,18 @@ class Container implements ContainerInterface {
 
     protected function hasParameterOverride(ReflectionParameter $dependency): bool
     {
-        return array_key_exists(
-            $dependency->getName(),
-            $this->getLastParameterOverride()
-        );
+
+        return isset($this->with[$dependency->getName()]);
+
+        // return array_key_exists(
+        //     $dependency->getName(),
+        //     $this->getLastParameterOverride()
+        // );
     }
 
     protected function getParameterOverride(ReflectionParameter $dependency)
     {
+        // return $this->getLastParameterOverride()[$dependency->name];
         return $this->with[$dependency->getName()];
     }
 
