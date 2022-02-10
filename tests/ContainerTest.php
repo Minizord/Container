@@ -15,11 +15,14 @@ use Minizord\Container\Tests\Fixtures\ClassAInterface;
 use Minizord\Container\Tests\Fixtures\ClassBInterface;
 
 use Minizord\Container\Tests\Fixtures\ClassCInterface;
+use Minizord\Container\Tests\Fixtures\OtherClassParameter;
+use Minizord\Container\Exceptions\BindingResolutionException;
 use Minizord\Container\Tests\Fixtures\ClassNeedClassParameter;
 use Minizord\Container\Tests\Fixtures\ClassParameterInterface;
 use Minizord\Container\Tests\Fixtures\ClassNeedPrimitiveParameter;
-use Minizord\Container\Tests\Fixtures\OtherClassParameter;
-use Minizord\Container\Exceptions\BindingResolutionException;
+use Minizord\Container\Tests\Fixtures\ClassWithClassVariadicParameter;
+use Minizord\Container\Tests\Fixtures\CLassWithPrimitiveDefaultParamater;
+use Minizord\Container\Tests\Fixtures\ClassWithPrimitiveVariadicParameter;
 
 // TESTES DE ID ALTERNATIVO
 test('Deve retornar se a string passada é um id alternativo (alias) ou não', function() {
@@ -242,6 +245,35 @@ test('Deve retornar uma instancia montada com os parametros de classe passados n
     ])->getClassParameter())->toBeInstanceOf(OtherClassParameter::class);
 });
 
+test('Deve retornar uma instancia em que uma dependencia é um parametro variadic primitivo ', function () {
+    $c = new Container;
+
+    $c->set('id', ClassWithPrimitiveVariadicParameter::class);
+
+    expect($c->get('id', ['string' => ['maozin', 'paozin']]))->toBeInstanceOf(ClassWithPrimitiveVariadicParameter::class);        
+});
+
+test('Deve retornar uma instancia em que uma dependencia é um parametro variadic de classe, e é passado pelo get()', function () {
+    $c = new Container;
+
+    // => ClassC ...$classes
+    $c->set('id', ClassWithClassVariadicParameter::class);
+
+    expect($c->get('id', [
+        'classes' => [
+            new ClassC, new ClassC
+        ]
+    ]))->toBeInstanceOf(ClassWithClassVariadicParameter::class); 
+});
+
+test('Deve retornar uma instancia em que uma dependencia é um parametro variadic de classe', function () {
+    $c = new Container;
+
+    $c->set('id', ClassWithClassVariadicParameter::class);
+
+    expect($c->get('id'))->toBeInstanceOf(ClassWithClassVariadicParameter::class);
+});
+
 // singleton
 test('Deve setar um singleton no container', function () {
     $c = new Container;
@@ -264,7 +296,7 @@ test('Deve retornar a exata mesma instancia de um singleton setado no container'
 test('Deve retornar instancias diferentes se um serviço for setado normalmente no container', function () {
     $c = new Container;
 
-    $c->set(ClassInterface::class , ClassConcrete::class);
+    $c->set(ClassInterface::class, ClassConcrete::class);
 
     expect($c->get(ClassInterface::class))->not()->toBe($c->get(ClassInterface::class));
     expect(spl_object_id($c->get(ClassInterface::class)))->not()->toEqual(spl_object_id($c->get(ClassInterface::class)));
@@ -272,10 +304,6 @@ test('Deve retornar instancias diferentes se um serviço for setado normalmente 
 
 test('Deve retornar uma instancia em que a classe precisa de um parametro primitivo com valor dafualt', function () {
     $c = new Container;
-
-    class CLassWithPrimitiveDefaultParamater {
-        public function __construct(string $string = 'string') {}
-    }
 
     $c->set('id', CLassWithPrimitiveDefaultParamater::class);
 
@@ -322,25 +350,10 @@ test('Deve retornar um erro ao tentar resolver uma de um serviço em que a class
 test('Deve retornar um erro ao tentar resolver uma classe que precisa de um parametro primitivo sem ter valor default', function () {
     $c = new Container;
 
-    class CLassWithoutPrimitiveDefaultParameter {
-        public function __construct(string $string) {}
-    }
-
     $c->set('id', CLassWithoutPrimitiveDefaultParameter::class);
 
     expect(fn() => $c->get('id'))->toThrow(BindingResolutionException::class);        
 });
 
-test('variados', function () {
-    $c = new Container;
 
-    class ClassWithVariadicParameter {
-        public function __construct(string ...$string) {
-            var_dump($string);
-        }
-    }
 
-    $c->set('id', ClassWithVariadicParameter::class);
-
-    expect($c->get('id', ['string' => [ 'maozin', 'paozin' ]]))->toBeInstanceOf(ClassWithVariadicParameter::Class);
-});

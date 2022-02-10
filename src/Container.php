@@ -217,8 +217,8 @@ class Container implements ContainerInterface {
 
         foreach ($dependencies as $dependency) {
 
+            // se o parametro já foi passado só pegamos e o retornamos
             if ($this->hasParameterOverride($dependency)) {
-
                 if ($dependency->isVariadic()) {
                     $results = [...$results, ...$this->getParameterOverride($dependency)];
                     continue;
@@ -230,17 +230,19 @@ class Container implements ContainerInterface {
             $result = is_null($this->getParameterClassName($dependency))
                 ? $this->resolvePrimitive($dependency)
                 : $this->resolveClass($dependency);
+            
+            
 
             if ($dependency->isVariadic()) {
-                var_dump('estou aqui');
+                if (!is_array($result)) {
+                    $result = [$result];
+                }
                 $results = [...$results, ...$result];
             }
             else {
                 $results[] = $result;
             }
         }
-
-        // var_dump($results);
 
         return $results;
     }
@@ -339,9 +341,7 @@ class Container implements ContainerInterface {
     {
         $className = $this->getParameterClassName($parameter);
 
-        $abstract = $this->getIdInContainer($className);
-
-        return $this->resolve($this->getDefinition($abstract));
+        return $this->get($className);
     }
 
     private function addToBuildStack(string $stack): void
