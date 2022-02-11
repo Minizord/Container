@@ -1,10 +1,14 @@
 <?php
 
 namespace Minizord\Container;
+
 use Closure;
 use Minizord\Container\Interfaces\DefinitionInterface;
+use Minizord\Container\Exceptions\DefinitionException;
 
 class Definition implements DefinitionInterface {
+
+    private array $contextual = [];
 
     /**
      * Construtor
@@ -64,10 +68,35 @@ class Definition implements DefinitionInterface {
 
     public function getClosure(): Closure
     {
+        if (is_null($this->closure)) {
+            throw new DefinitionException("Você está forçando pegar uma função (Closure) que você não definiu.");
+        }
+
         return $this->closure;
-    }
+    } 
+
     public function getClass(): string
-    {
+    {   
+        if(is_null($this->class)) {
+            throw new DefinitionException("Você está forçando pegar uma classe que você não definiu.");
+        }
+
         return $this->class;
+    }
+
+    public function hasContextual(string $abstract): bool
+    {
+        return isset($this->contextual[$abstract]);
+    }
+
+    public function getContextual(string $abstract): Closure|string|array
+    {
+        return $this->contextual[$abstract];
+    }
+
+    public function when(string $needs, Closure|string|array $give): self
+    {
+        $this->contextual[$needs] = $give;
+        return $this;
     }
 }
