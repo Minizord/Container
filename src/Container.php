@@ -416,4 +416,17 @@ class Container implements ContainerInterface {
 
         return $result;
     }
+
+    public function setParameter(string $id, string|int|float|bool $value): void
+    {
+        $this->parameters[$id] = $value;
+    }
+    public function hasParameter(string $id): bool
+    {
+        return isset($this->parameters[$id]);
+    }
+    public function getParameter(string $id): string
+    {
+        return $this->parameters[$id];
+    }
 }

@@ -23,5 +23,8 @@ interface ContainerInterface extends PsrContainerInterface {
     public function getAliasesById(string $id): array;
     public function getIdInContainer(string $aliasOrId): string;
     public function resolve(DefinitionInterface $definition): mixed;
+    public function setParameter(string $id, string|int|float|bool $value): void;
+    public function hasParameter(string $id): bool;
+    public function getParameter(string $id): string;
 
 }

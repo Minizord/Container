@@ -448,3 +448,14 @@ test('Deve retornar o id final do serviço dentro do container, passando o id fi
     expect($c->getIdInContainer('id_alternativo'))->toBe('id');
     expect($c->getIdInContainer('id'))->toBe('id');
 });
+
+
+// PARAMETROS
+test('Deve setar, verificar e pegar parametros', function() {
+    $c = new Container;
+
+    $c->setParameter('id', 'valor qualquer');
+
+    expect($c->hasParameter('id'))->toBeTrue();
+    expect($c->getParameter('id'))->toBe('valor qualquer');
+});
