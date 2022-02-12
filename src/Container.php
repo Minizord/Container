@@ -57,7 +57,7 @@ class Container implements ContainerInterface {
         return $this->resolve($definition);
     }
 
-    public function set(string $id, Closure|string|null $concrete = null, bool $shared = false): void
+    public function set(string $id, Closure|string|null $concrete = null, bool $shared = false): DefinitionInterface
     {
         if (is_null($concrete)) {
             $concrete = $id;
@@ -71,7 +71,7 @@ class Container implements ContainerInterface {
             $this->definitions[$id] = (new Definition($id, $concrete, null, $shared));
         }
 
-        // return $this->getDefinition($id);
+        return $this->getDefinition($id);
     }
 
     public function singleton(string $id, Closure|string|null $concrete): void
@@ -187,7 +187,7 @@ class Container implements ContainerInterface {
 
         // ai resolvemos elas
         try {
-            $instances = $this->resolveDependencies($dependencies);
+            $instances = $this->resolveDependencies($dependencies, $definition);
         } catch (BindingResolutionException $e) {
             $this->removeLastBuildStack();
             $this->resetWithParameters();
@@ -212,35 +212,29 @@ class Container implements ContainerInterface {
         }
     }
 
-    private function resolveDependencies(array $dependencies): array
+    private function resolveDependencies(array $dependencies, DefinitionInterface $definition): array
     {
+
         $results = [];
 
         foreach ($dependencies as $dependency) {
 
             // se o parametro já foi passado só pegamos e o retornamos
-            if ($this->hasParameterOverride($dependency)) {
-                if ($dependency->isVariadic()) {
-                    $results = [...$results, ...$this->getParameterOverride($dependency)];
-                    continue;
-                }
-                $results[] = $this->getParameterOverride($dependency);
+            if($result = $this->getResultInWithParameters($dependency, $results)) {
+                $results = $result;
                 continue;
             }
 
-            $result = is_null($this->getParameterClassName($dependency))
-                ? $this->resolvePrimitive($dependency)
-                : $this->resolveClass($dependency);
+            if ($result = $this->getResultInContextuals($dependency, $definition, $results)) {
+                $results = $result;
+                continue;
+            }
             
-            if ($dependency->isVariadic()) {
-                if (!is_array($result)) {
-                    $result = [$result];
-                }
-                $results = [...$results, ...$result];
+            if($result = $this->getResultInNormalResolver($dependency, $results)) {
+                $results = $result;
+                continue;
             }
-            else {
-                $results[] = $result;
-            }
+            
         }
 
         return $results;
@@ -271,7 +265,6 @@ class Container implements ContainerInterface {
 
     protected function getParameterOverride(ReflectionParameter $dependency)
     {
-        // return $this->getLastParameterOverride()[$dependency->name];
         return $this->with[$dependency->getName()];
     }
 
@@ -312,12 +305,9 @@ class Container implements ContainerInterface {
 
     protected function resolveClass(ReflectionParameter $parameter)
     {
- 
-            return $parameter->isVariadic()
-                ? $this->resolveVariadicClass($parameter)
-                : $this->get($this->getParameterClassName($parameter));
-       
-
+        return $parameter->isVariadic()
+            ? $this->resolveVariadicClass($parameter)
+            : $this->get($this->getParameterClassName($parameter));
     }
 
     private function resolveVariadicClass(ReflectionParameter $parameter)
@@ -340,5 +330,93 @@ class Container implements ContainerInterface {
     private function resetWithParameters(): void
     {
         array_pop($this->with);
+    }
+
+    public function getResultInNormalResolver(ReflectionParameter $dependency, array $results): mixed
+    {
+        $result = null;
+
+        $result = is_null($this->getParameterClassName($dependency))
+            ? $this->resolvePrimitive($dependency)
+            : $this->resolveClass($dependency);
+
+        if (!is_null($result)) {
+            if (!$dependency->isVariadic()) {
+                $results[] = $result;
+                return $results;
+            }
+
+            if (!is_array($result)) {
+                $result = [$result];
+            }
+
+            $results = [...$results, ...$result];
+            return $results;
+        }
+
+        return $result;
+    }
+    public function getResultInWithParameters(ReflectionParameter $dependency, array $results): mixed
+    {
+        $result = null;
+
+        if ($this->hasParameterOverride($dependency)) {
+            $result = $this->getParameterOverride($dependency);
+        }
+
+        if (!is_null($result)) {
+            if (!$dependency->isVariadic()) {
+                $results[] = $result;
+                return $results;
+            }
+
+            if (!is_array($result)) {
+                $result = [$result];
+            }
+
+            $results = [...$results, ...$result];
+            return $results;
+        }
+
+        return $result;
+    }
+    public function getResultInContextuals(ReflectionParameter $dependency, Definition $definition, array $results): mixed
+    {
+        $result = null;
+
+        $className = $this->getParameterClassName($dependency);
+
+        if(is_null($className)) {
+            if ($definition->hasContextual($dependency->getName())) {
+                $result =  $this->get($definition->getContextual($dependency->getName()));
+            }
+        } else {
+            if ($definition->hasContextual($className)) {
+                $contextual = $definition->getContextual($className);
+
+                if(!is_array($contextual)) {
+                    $result = $this->get($contextual);
+                }
+                else {
+                    $result = array_map(fn($classForBuild) => $this->get($classForBuild), $contextual);
+                }
+            }
+        }
+
+        if (!is_null($result)) {
+            if (!$dependency->isVariadic()) {
+                $results[] = $result;
+                return $results;
+            }
+
+            if (!is_array($result)) {
+                $result = [$result];
+            }
+
+            $results = [...$results, ...$result];
+            return $results;
+        }
+
+        return $result;
     }
 }

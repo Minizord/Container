@@ -1,31 +1,37 @@
 <?php
 use Minizord\Container\Container;
-use Minizord\Container\Tests\Fixtures\ClassA;
-
-use Minizord\Container\Tests\Fixtures\ClassB;
-use Minizord\Container\Tests\Fixtures\ClassC;
-use Minizord\Container\Exceptions\NotFoundException;
-use Minizord\Container\Tests\Fixtures\ClassConcrete;
-
-use Minizord\Container\Tests\Fixtures\ClassInterface;
-use Minizord\Container\Tests\Fixtures\ClassParameter;
-use Minizord\Container\Tests\Fixtures\ParentOfAClass;
 use Minizord\Container\Interfaces\DefinitionInterface;
 
+use Minizord\Container\Exceptions\NotFoundException;
+use Minizord\Container\Exceptions\BindingResolutionException;
+
 use Minizord\Container\Tests\Fixtures\ClassAInterface;
+use Minizord\Container\Tests\Fixtures\ClassA;
 
 use Minizord\Container\Tests\Fixtures\ClassBInterface;
+use Minizord\Container\Tests\Fixtures\ClassB;
+
 use Minizord\Container\Tests\Fixtures\ClassCInterface;
-use Minizord\Container\Tests\Fixtures\OtherClassParameter;
-use Minizord\Container\Tests\Fixtures\ClassLoopConstructor;
-use Minizord\Container\Exceptions\BindingResolutionException;
-use Minizord\Container\Tests\Fixtures\ClassNeedClassParameter;
+use Minizord\Container\Tests\Fixtures\ClassC;
+
+use Minizord\Container\Tests\Fixtures\ClassInterface;
+use Minizord\Container\Tests\Fixtures\ClassConcrete;
+use Minizord\Container\Tests\Fixtures\ClassImplementInterface;
+use Minizord\Container\Tests\Fixtures\OtherClassImplementInterface;
+
 use Minizord\Container\Tests\Fixtures\ClassParameterInterface;
+use Minizord\Container\Tests\Fixtures\ClassParameter;
+use Minizord\Container\Tests\Fixtures\OtherClassParameter;
+
+use Minizord\Container\Tests\Fixtures\ClassNeedOtherClass;
+use Minizord\Container\Tests\Fixtures\ClassLoopConstructor;
+use Minizord\Container\Tests\Fixtures\ClassNeedClassParameter;
 use Minizord\Container\Tests\Fixtures\ClassNeedPrimitiveParameter;
 use Minizord\Container\Tests\Fixtures\ClassWithClassVariadicParameter;
 use Minizord\Container\Tests\Fixtures\ClassWithParentAndParentDependency;
 use Minizord\Container\Tests\Fixtures\CLassWithPrimitiveDefaultParamater;
 use Minizord\Container\Tests\Fixtures\ClassWithPrimitiveVariadicParameter;
+use Minizord\Container\Tests\Fixtures\ClassNeedVariadicClass;
 
 // TESTES DE ID ALTERNATIVO
 test('Deve retornar se a string passada é um id alternativo (alias) ou não', function() {
@@ -315,17 +321,6 @@ test('Deve retornar uma instancia em que a classe precisa de um parametro primit
     expect($c->get('id'))->toBeInstanceOf(CLassWithPrimitiveDefaultParamater::class);
 });
 
-// TESTE DE MÉTODO MAIS GERAIS
-test('Deve retornar o id final do serviço dentro do container, passando o id final ou um alternativo', function() {
-    $c = new Container;
-
-    $c->alias('id', 'id_alternativo');
-
-    expect($c->getIdInContainer('id_alternativo'))->toBe('id');
-    expect($c->getIdInContainer('id'))->toBe('id');
-});
-
-
 // TESTES DE ERRO 
 test('Deve retornar um erro ao buscar com um id não existente e sendo uma classe não existente', function () {
     $c = new Container;
@@ -386,9 +381,8 @@ test('Deve retornar um erro ao tentar construir uma classe q precisa de um param
     expect(fn() => $c->get('id'))->toThrow(BindingResolutionException::class);
 });
 
-test('error', function() {
+test('Deve construir a classe mesmo sem ter os parametros, desde que eles sejam opcionais', function() {
     $c = new Container;
-
 
     class AnClass {
         public function __construct(private string $parameter = 'default') {}
@@ -396,4 +390,44 @@ test('error', function() {
    
     $c->set('id', AnClass::class);
     expect( $c->get('id'))->toBeInstanceOf(AnClass::class);
+});
+
+test('Deve construir um serviço que tem contexto', function() {
+    $c = new Container;
+
+    $c->set('id', ClassNeedOtherClass::class)->when(ClassInterface::class, OtherClassImplementInterface::class);
+
+    expect($c->get('id'))->toBeInstanceOf(ClassNeedOtherClass::class);
+    expect($c->get('id')->getImplementedClass())->toBeInstanceOf(OtherClassImplementInterface::class);
+});
+
+test('Deve construir um serviço que tem contexto, dando prioridade aos parametros passados para contruir', function () {
+    $c = new Container;
+
+    $c->set('id', ClassNeedOtherClass::class)->when(ClassInterface::class, OtherClassImplementInterface::class);
+
+    expect($c->get('id'))->toBeInstanceOf(ClassNeedOtherClass::class);
+    expect($c->get('id', [ 'anClass' => new ClassImplementInterface  ])->getImplementedClass())->toBeInstanceOf(ClassImplementInterface::class);
+});
+
+test('Deve construir um serviço que tem contexto para um parametro variadic', function () {
+    $c = new Container;
+
+    $c->set('id', ClassNeedVariadicClass::class)->when(ClassInterface::class , [
+        ClassImplementInterface::class,
+        OtherClassImplementInterface::class,
+    ]);
+
+    expect($c->get('id'))->toBeInstanceOf(ClassNeedVariadicClass::class);
+    // expect($c->get('id', ['anClass' => new ClassImplementInterface])->getImplementedClass())->toBeInstanceOf(ClassImplementInterface::class);
+});
+
+// OUTROS
+test('Deve retornar o id final do serviço dentro do container, passando o id final ou um alternativo', function () {
+    $c = new Container;
+
+    $c->alias('id', 'id_alternativo');
+
+    expect($c->getIdInContainer('id_alternativo'))->toBe('id');
+    expect($c->getIdInContainer('id'))->toBe('id');
 });

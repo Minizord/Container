@@ -38,4 +38,11 @@ interface DefinitionInterface {
     public function getClosure(): Closure;
 
     public function getClass(): string;
+
+    public function when(string $needs, Closure|string|array $give): self;
+
+    public function hasContextual(string $abstract): bool;
+    
+    public function getContextual(string $abstract): Closure|string|array;
+
 }
