@@ -340,21 +340,17 @@ class Container implements ContainerInterface {
             ? $this->resolvePrimitive($dependency)
             : $this->resolveClass($dependency);
 
-        if (!is_null($result)) {
-            if (!$dependency->isVariadic()) {
-                $results[] = $result;
-                return $results;
-            }
-
-            if (!is_array($result)) {
-                $result = [$result];
-            }
-
-            $results = [...$results, ...$result];
+        if (!$dependency->isVariadic()) {
+            $results[] = $result;
             return $results;
         }
 
-        return $result;
+        if (!is_array($result)) {
+            $result = [$result];
+        }
+
+        $results = [...$results, ...$result];
+        return $results;
     }
     public function getResultInWithParameters(ReflectionParameter $dependency, array $results): mixed
     {
@@ -390,7 +386,8 @@ class Container implements ContainerInterface {
             if ($definition->hasContextual($dependency->getName())) {
                 $result =  $this->get($definition->getContextual($dependency->getName()));
             }
-        } else {
+        } 
+        else {
             if ($definition->hasContextual($className)) {
                 $contextual = $definition->getContextual($className);
 

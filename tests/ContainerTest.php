@@ -135,15 +135,6 @@ test('Deve retornar todas as definições', function () {
 });
 
 // TESTES DOS MÉTODOS PRINCIPAIS
-// has
-test('Deve retornar se um determinado serviço existe no container passando um id ou id alternativo', function() {
-    $c = new Container;
-
-    $c->singleton('id', 'classe_concreta_ou_função');
-    $c->singleton('id2', 'classe_concreta_ou_função_2');
-
-    expect($c->has('id'))->toBeTrue();
-});
 
 // set
 test('Deve setar um serviço em que a parte concreta é uma função (Closure)', function() {
@@ -269,6 +260,18 @@ test('Deve retornar uma instancia em que uma dependencia é um parametro variadi
     ]))->toBeInstanceOf(ClassWithClassVariadicParameter::class); 
 });
 
+test('Deve retornar uma instancia em que uma dependencia é um parametro variadic de classe, e é passado pelo get() sem ser array', function () {
+    $c = new Container;
+
+    // => ClassC ...$classes
+    $c->set('id', ClassWithClassVariadicParameter::class);
+
+    expect($c->get('id', [
+        'classes' => new ClassC
+    ]))->toBeInstanceOf(ClassWithClassVariadicParameter::class);
+
+});
+
 test('Deve retornar uma instancia em que uma dependencia é um parametro variadic de classe', function () {
     $c = new Container;
 
@@ -283,6 +286,71 @@ test('Deve construir uma classe em que uma dependencia é "parent"', function() 
     $c->set('id', ClassWithParentAndParentDependency::class);
 
     expect($c->get('id'))->toBeInstanceOf(ClassWithParentAndParentDependency::class);
+});
+
+
+
+test('Deve retornar um erro ao tentar construir uma classe q precisa de um parametro primitivo sem valor default e sem with()', function () {
+    $c = new Container;
+
+    class ClassNotReceivePrimitiveParameter {
+    public function __construct(string $needThisParameter) {
+        }
+    }
+
+    $c->set('id', ClassNotReceivePrimitiveParameter::class);
+
+    expect(fn() => $c->get('id'))->toThrow(BindingResolutionException::class);        
+});
+
+test('Deve construir a classe mesmo sem ter os parametros, desde que eles sejam opcionais', function () {
+    $c = new Container;
+
+    class AnClass {
+    public function __construct(private string $parameter = 'default') {
+        }
+    }
+
+    $c->set('id', AnClass::class);
+    expect($c->get('id'))->toBeInstanceOf(AnClass::class);        
+});
+
+// CONTEXTO
+test('Deve construir um serviço que tem contexto', function () {
+    $c = new Container;
+
+    $c->set('id', ClassNeedOtherClass::class)->when(ClassInterface::class , OtherClassImplementInterface::class);
+
+    expect($c->get('id'))->toBeInstanceOf(ClassNeedOtherClass::class);
+    expect($c->get('id')->getImplementedClass())->toBeInstanceOf(OtherClassImplementInterface::class);
+});
+
+test('Deve construir um serviço que tem contexto, dando prioridade aos parametros passados para contruir', function () {
+    $c = new Container;
+
+    $c->set('id', ClassNeedOtherClass::class)->when(ClassInterface::class , OtherClassImplementInterface::class);
+
+    expect($c->get('id'))->toBeInstanceOf(ClassNeedOtherClass::class);
+    expect($c->get('id', ['anClass' => new ClassImplementInterface])->getImplementedClass())->toBeInstanceOf(ClassImplementInterface::class);
+});
+
+test('Deve construir um serviço que tem contexto para um parametro variadic', function () {
+    $c = new Container;
+
+    $c->set('id', ClassNeedVariadicClass::class)->when(ClassInterface::class , [
+        ClassImplementInterface::class ,
+        OtherClassImplementInterface::class ,
+    ]);
+
+    expect($c->get('id'))->toBeInstanceOf(ClassNeedVariadicClass::class);
+});
+
+test('Deve construir um serviço que tem contexto para um parametro variadic, passando apenas a classe', function () {
+    $c = new Container;
+
+    $c->set('id', ClassNeedVariadicClass::class)->when(ClassInterface::class , ClassImplementInterface::class);
+
+    expect($c->get('id'))->toBeInstanceOf(ClassNeedVariadicClass::class);
 });
 
 // singleton
@@ -369,58 +437,7 @@ test('Deve retornar um erro ao tentar construir uma classe que depende dela mesm
     expect(fn() => $c->get('id'))->toThrow(BindingResolutionException::class);
 });
 
-test('Deve retornar um erro ao tentar construir uma classe q precisa de um parametro primitivo sem valor default e sem with()', function() {
-    $c = new Container;
 
-    class ClassNotReceivePrimitiveParameter {
-        public function __construct(string $needThisParameter) {}
-    }
-
-    $c->set('id', ClassNotReceivePrimitiveParameter::class);
-
-    expect(fn() => $c->get('id'))->toThrow(BindingResolutionException::class);
-});
-
-test('Deve construir a classe mesmo sem ter os parametros, desde que eles sejam opcionais', function() {
-    $c = new Container;
-
-    class AnClass {
-        public function __construct(private string $parameter = 'default') {}
-    }
-   
-    $c->set('id', AnClass::class);
-    expect( $c->get('id'))->toBeInstanceOf(AnClass::class);
-});
-
-test('Deve construir um serviço que tem contexto', function() {
-    $c = new Container;
-
-    $c->set('id', ClassNeedOtherClass::class)->when(ClassInterface::class, OtherClassImplementInterface::class);
-
-    expect($c->get('id'))->toBeInstanceOf(ClassNeedOtherClass::class);
-    expect($c->get('id')->getImplementedClass())->toBeInstanceOf(OtherClassImplementInterface::class);
-});
-
-test('Deve construir um serviço que tem contexto, dando prioridade aos parametros passados para contruir', function () {
-    $c = new Container;
-
-    $c->set('id', ClassNeedOtherClass::class)->when(ClassInterface::class, OtherClassImplementInterface::class);
-
-    expect($c->get('id'))->toBeInstanceOf(ClassNeedOtherClass::class);
-    expect($c->get('id', [ 'anClass' => new ClassImplementInterface  ])->getImplementedClass())->toBeInstanceOf(ClassImplementInterface::class);
-});
-
-test('Deve construir um serviço que tem contexto para um parametro variadic', function () {
-    $c = new Container;
-
-    $c->set('id', ClassNeedVariadicClass::class)->when(ClassInterface::class , [
-        ClassImplementInterface::class,
-        OtherClassImplementInterface::class,
-    ]);
-
-    expect($c->get('id'))->toBeInstanceOf(ClassNeedVariadicClass::class);
-    // expect($c->get('id', ['anClass' => new ClassImplementInterface])->getImplementedClass())->toBeInstanceOf(ClassImplementInterface::class);
-});
 
 // OUTROS
 test('Deve retornar o id final do serviço dentro do container, passando o id final ou um alternativo', function () {
