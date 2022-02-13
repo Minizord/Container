@@ -14,7 +14,7 @@ class Definition implements DefinitionInterface {
      * Construtor
      *
      * @param string        $id       Identificador do serviço, geralmente uma interface ou a própria classe
-     * @param string|null   $class    A classe concreta que será instanciada ao resolver essa definição
+     * @param string|null   $class    A classe concreta que será instânciada ao resolver essa definição
      * @param Closure|null  $closure  Função que será retornada ao resolver essa definição
      * @param boolean       $shared   Define se será compartilhado ou seja um singleton
      */
@@ -48,7 +48,7 @@ class Definition implements DefinitionInterface {
     /**
      * Tranforma esse serviço em um singleton ou não
      *
-     * @param boolean  $shared  Determina se será um singleton
+     * @param boolean $shared  Determina se será um singleton
      * @return void
      */
     public function setShared(bool $shared): void
@@ -66,33 +66,62 @@ class Definition implements DefinitionInterface {
         return isset($this->closure);
     }
 
+    /**
+     * Retorna a função (Closure) setada no serviço
+     *
+     * @return Closure
+     */
     public function getClosure(): Closure
     {
         if (is_null($this->closure)) {
-            throw new DefinitionException("Você está forçando pegar uma função (Closure) que você não definiu.");
+            throw new DefinitionException("Você está forçando o retorno de uma função (Closure) que você não definiu.");
         }
         return $this->closure;
     } 
 
+    /**
+     * Retorna a função classe setada no serviço
+     *
+     * @return string
+     */
     public function getClass(): string
     {   
         if(is_null($this->class)) {
-            throw new DefinitionException("Você está forçando pegar uma classe que você não definiu.");
+            throw new DefinitionException("Você está forçando o retorno de uma classe que você não definiu.");
         }
 
         return $this->class;
     }
 
+    /**
+     * Retorna se existe tal contexto
+     *
+     * @param string $abstract Classe abstrata
+     * @return boolean
+     */
     public function hasContextual(string $abstract): bool
     {
         return isset($this->contextual[$abstract]);
     }
 
+    /**
+     * Retorna um contexto
+     *
+     * @param string $abstract Classe abstrata
+     * @return Closure|string|array
+     */
     public function getContextual(string $abstract): Closure|string|array
     {
         return $this->contextual[$abstract];
     }
 
+    /**
+     * Adiciona um contexto para esse serviço
+     *
+     * @param string                $needs  Quando o serviço precisar disso
+     * @param Closure|string|array  $give   Isso será entregue no lugar
+     * @return self
+     */
     public function when(string $needs, Closure|string|array $give): self
     {
         $this->contextual[$needs] = $give;
