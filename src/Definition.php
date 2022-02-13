@@ -71,7 +71,6 @@ class Definition implements DefinitionInterface {
         if (is_null($this->closure)) {
             throw new DefinitionException("Você está forçando pegar uma função (Closure) que você não definiu.");
         }
-
         return $this->closure;
     } 
 

@@ -30,6 +30,26 @@ test('Deve setar um contexto ', function() {
     expect($d->getContextual(ClassInterface::class))->toBe(ClassConcrete::class);
 });
 
+// GETTERS
+test('Deve retornar o id da definição', function () {
+    $d = new Definition('definition.id', 'definition.class');
+
+    expect($d->getId())->toBe('definition.id');
+});
+
+test('Deve retornar a classe da definição', function () {
+    $d = new Definition('definition.id', 'definition.class');
+
+    expect($d->getClass())->toBe('definition.class');
+});
+
+test('Deve retornar a função (Closure) da definição', function () {
+    $function = fn() => 'uma frase qualquer';
+    $d = new Definition('definition.id', null, $function);
+
+    expect($d->getClosure())->toBe($function);
+});
+
 // BOOLS
 test('Deve retornar se a definição tem uma closure ou não', function () {
     $d = new Definition('definition.id', null, function(){});
@@ -53,26 +73,6 @@ test('Deve retornar de há tal contexto ', function () {
     $d->when(ClassInterface::class , ClassConcrete::class);
 
     expect($d->hasContextual(ClassInterface::class))->toBeTrue();
-});
-
-// GETTERS
-test('Deve retornar o id da definição', function () {
-    $d = new Definition('definition.id', 'definition.class');
-
-    expect($d->getId())->toBe('definition.id');
-});
-
-test('Deve retornar a classe da definição', function () {
-    $d = new Definition('definition.id', 'definition.class');
-
-    expect($d->getClass())->toBe('definition.class');
-});
-
-test('Deve retornar a função (Closure) da definição', function () {
-    $function = fn() => 'uma frase qualquer';
-    $d = new Definition('definition.id', null, $function);
-
-    expect($d->getClosure())->toBe($function);
 });
 
 // ERROS

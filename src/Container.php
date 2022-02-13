@@ -25,7 +25,7 @@ class Container implements ContainerInterface {
     //PRINCIPAIS
     public function has(string $id): bool
     {
-        return isset($this->instances[$id]) || isset($this->definitions[$id]) || isset($this->aliases[$id]);
+        return isset($this->instances[$id]) || isset($this->definitions[$id]) || $this->hasAlias($id);
     }
 
     public function get(string $id, array $parameters = []): mixed
