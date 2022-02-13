@@ -7,6 +7,7 @@ use Minizord\Container\Interfaces\DefinitionInterface;
 use Psr\Container\ContainerInterface as PsrContainerInterface;
 
 interface ContainerInterface extends PsrContainerInterface {
+
     public function set(string $id, Closure|string|null $concrete = null, bool $shared = false): DefinitionInterface;
     public function singleton(string $id, Closure|string|null $concrete): void;
     public function instance(string $id, mixed $instance): void;
@@ -25,6 +26,6 @@ interface ContainerInterface extends PsrContainerInterface {
     public function resolve(DefinitionInterface $definition): mixed;
     public function setParameter(string $id, string|int|float|bool $value): void;
     public function hasParameter(string $id): bool;
-    public function getParameter(string $id): string;
+    public function getParameter(string $id): string|int|float|bool;
 
 }
