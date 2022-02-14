@@ -6,10 +6,16 @@ Apenas um simples container para injeção de dependências.
 
 Este container é um Zord do Minizord Framework ainda em desenvolvimento.
 
-[Instalação](#Instalação) •
-[Guia de uso](#guide)
+[Guia de uso](https://github.com/Minizord/Container/wiki/Forma-de-uso)
 
 </div>
+
+## Container
+Um container de injeção de dependência (DI) e um objeto que sabe como criar outros objetos e também suas dependências e as subsequentes.
+
+Voce pode entender melhor como functiona um container e também  ver a ultilização de um neste [video](https://www.youtube.com/watch?v=rchkZgr0L8M) do canal Dias de Dev.  
+
+E neste outro [video](https://www.youtube.com/watch?v=sMYmZjfqPN0&t=2960s) (inglês) você pode ter um exemplo da criação de um, por [Jess Archer](https://github.com/jessarcher).
 
 ## Instalação
 <br/>
@@ -41,3 +47,4 @@ $container = new Container;
 <br/>
 
 Ve as formas de uso na [wiki](https://github.com/Minizord/Container/wiki/Forma-de-uso)
+
