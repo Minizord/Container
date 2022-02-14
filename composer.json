@@ -1,6 +1,6 @@
 {
     "name": "minizord/container",
-    "description": "Um simples container do Minizord",
+    "description": "Um simples container para injeção de dependência. Esse pacote é um Zord do framework Minizord em construção.",
     "type": "library",
     "license": "mit",
     "autoload": {
@@ -15,7 +15,8 @@
     },
     "scripts": {
         "test": "./vendor/bin/pest",
-        "test-cover": "./vendor/bin/pest --coverage"
+        "test-cover": "./vendor/bin/pest --coverage",
+        "test-html": "./vendor/bin/pest --coverage-html ./html"
     },
     "authors": [
         {
